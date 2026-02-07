@@ -124,4 +124,9 @@ apscan scan --target http://localhost:8000/openapi.json --plugin-dir ./my_rules
 
 ## Workflow Automation
 
+
 APScan supports YAML-based workflows for complex authentication flows or multi-step attacks. Use the visual builder in the Web UI to generate these.
+
+## Troubleshooting
+
+Encountering issues? Check out our [Troubleshooting Guide](TROUBLESHOOTING.md) for solutions to common problems.
