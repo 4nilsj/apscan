@@ -19,8 +19,8 @@ A modular, plug-and-play API security scanner designed for CI/CD and modern API 
 
 ## Installation
 
-
 See [INSTALL.md](INSTALL.md) for detailed installation instructions.
+See [USAGE.md](USAGE.md) for a comprehensive usage guide for the Web UI and CLI.
 
 ### Quick Start
 
