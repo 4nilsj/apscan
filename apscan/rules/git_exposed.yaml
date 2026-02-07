@@ -1,0 +1,11 @@
+id: "MISC-001"
+name: "Exposed Git Configuration"
+description: "Detects exposed .git/config files which can lead to source code disclosure."
+severity: "HIGH"
+remediation: "Ensure .git directories are not served by the web server."
+request:
+    path: "/.git/config"
+    method: "GET"
+match:
+    status: 200
+    body: "repositoryformatversion"

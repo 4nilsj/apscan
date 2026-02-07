@@ -1,0 +1,22 @@
+id: "login-flow"
+name: "Login and Scan Profile"
+steps:
+  - id: "login"
+    method: "POST"
+    path: "/api/login"
+    body:
+      username: "admin"
+      password: "password"
+    extract:
+      - source: "body"
+        key: "token"
+        variable: "auth_token"
+
+  - id: "profile"
+    method: "GET"
+    path: "/api/profile"
+    params: 
+      id: "1"
+    headers:
+      Authorization: "Bearer ${auth_token}"
+    scan: true # Enable scanning on this endpoint

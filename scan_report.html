@@ -1,0 +1,225 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>APScan Security Report</title>
+            <style>
+                body { font-family: sans-serif; margin: 20px; }
+                h1 { color: #2c3e50; }
+                .summary { background: #ecf0f1; padding: 10px; border-radius: 5px; }
+                .finding { border: 1px solid #ddd; margin: 10px 0; padding: 10px; border-radius: 5px; }
+                .high { border-left: 5px solid #e74c3c; }
+                .medium { border-left: 5px solid #f39c12; }
+                .low { border-left: 5px solid #3498db; }
+            </style>
+        </head>
+        <body>
+            <h1>APScan Security Report</h1>
+            <div class="summary">
+                <p><strong>Target:</strong> http://localhost:8000</p>
+                <p><strong>Total Findings:</strong> 14</p>
+            </div>
+            <h2>Findings</h2>
+        
+            <div class="finding medium">
+                <h3>[MEDIUM] Stack Trace Leak (2 occurrences)</h3>
+                <p><strong>Description:</strong> Stack trace leaked in 500 response.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Disable verbose error messages in production.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>POST /api/stack_trace</strong>
+                        <pre>Matched pattern: Traceback \(most recent call last\):
+Response snippet: {"error":"ISE","trace":"Traceback (most recent call last): ..."}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/stack_trace</strong>
+                        <pre>Matched pattern: Traceback \(most recent call last\):
+Response snippet: {"error":"ISE","trace":"Traceback (most recent call last): ..."}...</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding low">
+                <h3>[LOW] Unsafe HTTP Methods (1 occurrences)</h3>
+                <p><strong>Description:</strong> Method TRACE is enabled.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Disable the TRACE method in server configuration.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>TRACE /api/unsafe</strong>
+                        <pre>Received 200 OK for TRACE (Headers reflected in body - Cross Site Tracing risk)</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Unauthenticated Access (3 occurrences)</h3>
+                <p><strong>Description:</strong> Endpoint /api/pollute is accessible without authentication.</p>
+                <p><strong>Impact:</strong> Unauthorized actors can access sensitive data or perform actions.</p>
+                <p><strong>Recommendation:</strong> Implement proper authentication middleware (e.g., OAuth2, API Key) for this endpoint.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>POST /api/pollute</strong>
+                        <pre>Received 200 OK with body: {}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACE /api/unsafe</strong>
+                        <pre>Received 200 OK with body: {"echo":"unsafe"}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /robots.txt</strong>
+                        <pre>Received 200 OK with body: User-agent: *
+Disallow: /admin...</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding info">
+                <h3>[INFO] Recon: File Found (1 occurrences)</h3>
+                <p><strong>Description:</strong> Found discovered file: /robots.txt</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Review contents to ensure no sensitive info is leaked (e.g. disallowed paths in robots.txt).</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /robots.txt</strong>
+                        <pre>File exists at http://localhost:8000/robots.txt (200 OK)</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding low">
+                <h3>[LOW] Missing Security Headers (2 occurrences)</h3>
+                <p><strong>Description:</strong> Response missing security headers: X-Content-Type-Options, Strict-Transport-Security, Content-Security-Policy.</p>
+                <p><strong>Impact:</strong> Reduced defense against XSS, clickjacking, and MITM.</p>
+                <p><strong>Recommendation:</strong> Configure your web server/gateway to send standard security headers.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>TRACE /api/unsafe</strong>
+                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /robots.txt</strong>
+                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding low">
+                <h3>[LOW] Lack of Rate Limiting (2 occurrences)</h3>
+                <p><strong>Description:</strong> Endpoint does not appear to enforce rate limiting (no 429s or headers observed).</p>
+                <p><strong>Impact:</strong> Susceptible to Denial of Service (DoS) or Brute Force.</p>
+                <p><strong>Recommendation:</strong> Implement rate limiting middleware (e.g. 100/minute).</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>TRACE /api/unsafe</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /robots.txt</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding info">
+                <h3>[INFO] Custom Hello Rule (1 occurrences)</h3>
+                <p><strong>Description:</strong> Custom rule execution confirmed.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> None</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /</strong>
+                        <pre>Plugin system active.</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding info">
+                <h3>[INFO] Shadow API Detection (2 occurrences)</h3>
+                <p><strong>Description:</strong> Found potential shadow or undocumented API location: http://localhost:8000/old</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Ensure all API endpoints are documented and deprecated versions are disabled.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /old</strong>
+                        <pre>Received 200 OK for http://localhost:8000/old</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /admin</strong>
+                        <pre>Received 200 OK for http://localhost:8000/admin</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+        </body>
+        </html>
+        

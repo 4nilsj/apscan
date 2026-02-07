@@ -1,0 +1,33 @@
+[project]
+name = "apscan"
+version = "0.1.0"
+description = "A modular, plug-and-play API Security Scanner"
+authors = [
+    {name = "Antigravity", email = "antigravity@example.com"},
+]
+dependencies = [
+    "typer>=0.9.0",
+    "fastapi>=0.109.0",
+    "httpx>=0.26.0",
+    "pydantic>=2.6.0",
+    "pyyaml>=6.0",
+    "rich>=13.7.0",
+    "prance>=23.6.21.0",
+    "openapi-spec-validator>=0.7.1",
+    "uvicorn>=0.27.0",
+    "python-multipart>=0.0.9",
+    "sqlalchemy>=2.0.0",
+    "aiosqlite>=0.19.0",
+    "greenlet>=3.0.0",
+    "xhtml2pdf>=0.2.14",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[project.scripts]
+apscan = "apscan.cli.main:app"

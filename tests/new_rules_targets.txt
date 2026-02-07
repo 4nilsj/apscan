@@ -1,0 +1,5 @@
+POST http://localhost:8000/api/stack_trace
+TRACE http://localhost:8000/api/unsafe
+POST http://localhost:8000/api/pollute
+GET http://localhost:8000/robots.txt
+GET http://localhost:8000/

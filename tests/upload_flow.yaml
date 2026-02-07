@@ -1,0 +1,9 @@
+id: "upload-test"
+name: "Upload Test"
+steps:
+  - id: "upload"
+    method: "POST"
+    path: "/api/upload"
+    files:
+      file: "<?php echo 'hacked'; ?>"
+    scan: false
