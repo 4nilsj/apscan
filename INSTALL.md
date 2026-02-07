@@ -13,6 +13,12 @@ Before starting, ensure you have the following software installed:
 - **Git**: For cloning the repository.
   - Check version: `git --version`
 
+### System Dependencies (Optional)
+For PDF report generation, you may need additional system libraries:
+- **macOS**: `brew install cairo pkg-config`
+- **Ubuntu/Debian**: `sudo apt-get install libcairo2-dev pkg-config python3-dev`
+- **Fedora**: `sudo dnf install cairo-devel pkg-config python3-devel`
+
 ## Step 1: Clone the Repository
 
 First, get the code on your machine:

@@ -7,6 +7,7 @@ APScan is a modular API security scanner designed for extensibility and integrat
 ```mermaid
 graph TD
     Client[Web UI / CLI] -->|API / Commands| Server[APScan Server]
+    Client -->|Rule Builder| Server
     Server -->|Orchestrates| Engine[Scanning Engine]
     Engine -->|Loads| Discovery[Discovery Module]
     Engine -->|Executes| Rules[Rule Engine]
@@ -14,6 +15,8 @@ graph TD
     Rules -->|Generates| Findings[Vulnerabilities]
     Engine -->|Stores| DB[(Database)]
     Engine -->|Generates| Reports[Reports (HTML/JSON)]
+    Server -->|Manages| CustomRules[Custom Rules (YAML)]
+    Rules -->|Loads| CustomRules
 ```
 
 ## Core Components
@@ -24,6 +27,7 @@ The entry point for the Web UI. It's a **FastAPI** application that provides end
 - Triggering scans
 - Retrieving results and reports
 - Managing workflows
+- **Managing Custom Rules** (Create, Read, Delete)
 
 ### 2. Scanning Engine (`apscan/core`)
 The heart of the application.
@@ -58,7 +62,8 @@ Optional module for using LLMs (Gemini, OpenAI) to:
 | `apscan/discovery` | Endpoint discovery modules |
 | `apscan/reporting` | Report generators (HTML, JSON, PDF) |
 | `web/` | React/Vite Frontend |
-| `custom_plugins/` | User-defined rules |
+| `custom_plugins/` | User-defined rules (Python) |
+| `apscan/rules/custom/` | User-defined rules (YAML - Rule Builder) |
 
 ## Extending APScan
 

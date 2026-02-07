@@ -6,6 +6,9 @@ A modular, plug-and-play API security scanner designed for CI/CD and modern API 
 - **Modular Architecture**: Core scanner decoupled from rules and discovery.
 - **OpenAPI Support**: Auto-discovery of endpoints from Swagger/OpenAPI specs.
 - **GraphQL Support**: Introspection and specific security checks.
+- **Secrets Scanning**: Detects hardcoded keys, tokens, and credentials in responses.
+- **Dependency Analysis**: Identifies exposed config files and potential dependency vulnerabilities.
+- **No-Code Rule Builder**: visual "Drag-and-Drop" interface to create custom security rules without coding.
 - **AI Triage**: Optional integration with LLMs (Gemini, OpenAI) for advanced finding analysis.
 - **Modern UI**: Interactive dashboard for configuring scans and viewing results.
 - **CI/CD Ready**: CLI-first design with JSON/SARIF reporting.
@@ -122,8 +125,17 @@ Use the `--plugin-dir` argument to include your custom rules directory:
 apscan scan --target http://localhost:8000/openapi.json --plugin-dir ./my_rules
 ```
 
-## Workflow Automation
 
+## No-Code Rule Builder
+
+APScan includes a powerful visual rule builder for creating custom security checks without writing any code.
+
+1.  **Access**: Navigate to the "Rules Engine" tab in the Web UI.
+2.  **Create**: Define rule metadata (Name, Severity), target (Method, Path Regex), and match conditions (Status Code, Body Text/Regex, Headers).
+3.  **Deploy**: Save the rule, and it will be automatically picked up by the next scan.
+4.  **Manage**: View, delete, and manage your custom rules directly from the dashboard.
+
+## Workflow Automation
 
 APScan supports YAML-based workflows for complex authentication flows or multi-step attacks. Use the visual builder in the Web UI to generate these.
 

@@ -47,7 +47,15 @@ This guide addresses common issues you might encounter while installing or runni
 **Cause**: Missing system dependencies for `xhtml2pdf`.
 **Solution**:
 - Ensure all Python dependencies are installed.
+- Ensure all Python dependencies are installed.
 - Check logs for specific missing libraries.
+
+### `OSError: no library called "cairo" was found`
+**Cause**: The system is missing the `cairo` graphics library required for PDF generation.
+**Solution**:
+- **macOS**: `brew install cairo pkg-config`
+- **Ubuntu**: `sudo apt-get install libcairo2-dev`
+- **Windows**: Install GTK3 runtime or use `pip install pipwin && pipwin install cairocffi`
 
 ### AI Analysis Not Working
 **Error**: "AI Analysis Unavailable: Dependency missing." or API errors.
