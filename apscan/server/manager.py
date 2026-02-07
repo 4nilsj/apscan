@@ -293,3 +293,70 @@ class ScanManager:
             
         from apscan.reporting.pdf_report import PDFReporter
         return PDFReporter.convert_html_to_pdf(html_content)
+
+    # --- Rule Management ---
+    
+    @property
+    def rule_loader(self):
+         # Lazy load
+         if not hasattr(self, "_rule_loader"):
+             from apscan.rule_engine.loader import RuleLoader
+             self._rule_loader = RuleLoader()
+         return self._rule_loader
+
+    def get_all_rules(self):
+        """Get all currently loaded rules."""
+        # Ensure rules are loaded
+        if not self.rule_loader.rules:
+             self.rule_loader.load_rules()
+             
+             # Also load custom plugins/rules if configured, but here we check the custom dir
+             custom_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "rules", "custom")
+             if os.path.exists(custom_dir):
+                 self.rule_loader.load_yaml_rules() # Reload YAMLs to catch new ones
+
+        return [
+            {
+                "id": r.id, 
+                "name": r.name, 
+                "description": getattr(r, "description", "No description"),
+                "severity": "MEDIUM", # Default or extract if available
+                "type": "YAML" if "YAMLRule" in str(type(r)) else "Python"
+            } 
+            for r in self.rule_loader.rules
+        ]
+
+    async def save_custom_rule(self, rule_data: dict) -> str:
+        """Save a new custom rule as YAML."""
+        import yaml
+        
+        rule_id = rule_data.get("id") or str(uuid.uuid4())[:8]
+        if "id" not in rule_data:
+            rule_data["id"] = rule_id
+            
+        filename = f"{rule_id}.yaml"
+        custom_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "rules", "custom")
+        os.makedirs(custom_dir, exist_ok=True)
+        
+        filepath = os.path.join(custom_dir, filename)
+        
+        with open(filepath, 'w') as f:
+            yaml.dump(rule_data, f)
+            
+        # Trigger reload - clear list and reload
+        self.rule_loader.rules = []
+        self.rule_loader.load_rules()
+        return rule_id
+
+    async def delete_custom_rule(self, rule_id: str) -> bool:
+        """Delete a custom rule."""
+        custom_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "rules", "custom")
+        filename = f"{rule_id}.yaml"
+        filepath = os.path.join(custom_dir, filename)
+        
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            self.rule_loader.rules = [] # Force reload
+            self.rule_loader.load_rules()
+            return True
+        return False

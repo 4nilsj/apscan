@@ -40,8 +40,11 @@ class DependencyCheckRule(ScannerRule):
         req = ScanRequest(method=endpoint.method, url=url)
         try:
             res = await context.http_client.send(req)
+            # Normalize headers keys to lowercase for comparison
+            res_headers_lower = {k.lower(): v for k, v in res.headers.items()}
+            
             for header in self.version_headers:
-                if header in res.headers:
+                if header.lower() in res_headers_lower:
                     findings.append(Vulnerability(
                         rule_id=self.id,
                         name=f"Leaked Version Header: {header}",
@@ -49,25 +52,16 @@ class DependencyCheckRule(ScannerRule):
                         description=f"The server exposes software version information via the {header} header.",
                         endpoint=endpoint.path,
                         method=endpoint.method,
-                        evidence=f"{header}: {res.headers[header]}",
+                        evidence=f"{header}: {res_headers_lower[header.lower()]}",
                         recommendation="Configure the server to suppress version headers."
                     ))
         except Exception:
             pass # Continue to file checks
 
-        # 2. Check for Exposed Config Files (Only run once per base URL ideally, but simplified here)
-        # We'll use a heuristic: only run if we satisfy a condition (e.g. root path or specific trigger)
-        # For now, we'll try to check relative to the current path if strictly necessary, 
-        # BUT standard practice is checking from the root.
-        
-        # To avoid spamming, we could use a context variable 'checked_dependencies'. 
-        # Assuming context isn't persistent across rule instantiations in a way that's easy to track yet.
-        # We will check relative to the *root* of the target URL.
-        
-        # This part should ideally be in a "Discovery" phase or run once. 
-        # We'll implement it here but it might be redundant if multiple endpoints scanned.
-        # Check if the endpoint path is root-ish to minimize redundancy
-        if endpoint.path == "/" or endpoint.path == "/health": 
+        # 2. Check for Exposed Config Files (Run once per scan)
+        if not context.variables.get("dependency_check_done", False):
+             context.variables["dependency_check_done"] = True
+             
              base_url = context.target_url.rstrip('/')
              for config_file in self.config_files:
                 file_url = base_url + config_file

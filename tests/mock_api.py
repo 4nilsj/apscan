@@ -197,5 +197,22 @@ def pollute_endpoint(data: dict):
 def robots():
     return PlainTextResponse("User-agent: *\nDisallow: /admin")
 
+
+# Vulnerability: Secrets Exposure
+@app.get("/api/config_secrets")
+def get_secrets():
+    return {
+        "aws_access_key": "AKIAIOSFODNN7EXAMPLE",
+        "private_key": "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEA..."
+    }
+
+# Vulnerability: Dependency Check (Exposed File)
+@app.get("/package.json")
+def get_package_json():
+    return JSONResponse(
+        content={"name": "vulnerable-app", "dependencies": {"express": "4.17.1"}},
+        headers={"X-Powered-By": "Express/4.17.1"}
+    )
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

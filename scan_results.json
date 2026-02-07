@@ -1,54 +1,47 @@
 [
   {
-    "rule_name": "Stack Trace Leak",
-    "rule_id": "STACK_TRACE",
-    "severity": "MEDIUM",
-    "description": "Stack trace leaked in 500 response.",
-    "impact": "Unknown",
-    "recommendation": "Disable verbose error messages in production.",
-    "count": 2,
-    "instances": [
-      {
-        "endpoint": "/api/stack_trace",
-        "method": "POST",
-        "evidence": "Matched pattern: Traceback \\(most recent call last\\):\nResponse snippet: {\"error\":\"ISE\",\"trace\":\"Traceback (most recent call last): ...\"}..."
-      },
-      {
-        "endpoint": "/api/stack_trace",
-        "method": "POST",
-        "evidence": "Matched pattern: Traceback \\(most recent call last\\):\nResponse snippet: {\"error\":\"ISE\",\"trace\":\"Traceback (most recent call last): ...\"}..."
-      }
-    ]
-  },
-  {
-    "rule_name": "Unsafe HTTP Methods",
-    "rule_id": "UNSAFE_METHODS",
-    "severity": "LOW",
-    "description": "Method TRACE is enabled.",
-    "impact": "Unknown",
-    "recommendation": "Disable the TRACE method in server configuration.",
-    "count": 1,
-    "instances": [
-      {
-        "endpoint": "/api/unsafe",
-        "method": "TRACE",
-        "evidence": "Received 200 OK for TRACE (Headers reflected in body - Cross Site Tracing risk)"
-      }
-    ]
-  },
-  {
     "rule_name": "Unauthenticated Access",
     "rule_id": "AUTH-001",
     "severity": "HIGH",
-    "description": "Endpoint /api/pollute is accessible without authentication.",
+    "description": "Endpoint /users/{user_id} is accessible without authentication.",
     "impact": "Unauthorized actors can access sensitive data or perform actions.",
     "recommendation": "Implement proper authentication middleware (e.g., OAuth2, API Key) for this endpoint.",
-    "count": 3,
+    "count": 13,
     "instances": [
       {
-        "endpoint": "/api/pollute",
+        "endpoint": "/users/{user_id}",
+        "method": "GET",
+        "evidence": "Received 200 OK with body: {\"user_id\":1,\"username\":\"admin\",\"email\":\"admin@example.com\",\"role\":\"admin\"}..."
+      },
+      {
+        "endpoint": "/products",
+        "method": "GET",
+        "evidence": "Received 200 OK with body: {\"products\":[\"item1\",\"item2\"]}..."
+      },
+      {
+        "endpoint": "/search",
+        "method": "GET",
+        "evidence": "Received 200 OK with body: {\"results\":[],\"query\":\"test_value\"}..."
+      },
+      {
+        "endpoint": "/graphql",
         "method": "POST",
-        "evidence": "Received 200 OK with body: {}..."
+        "evidence": "Received 200 OK with body: {\"data\":{\"result\":\"success\"}}..."
+      },
+      {
+        "endpoint": "/api/parse_xml",
+        "method": "POST",
+        "evidence": "Received 200 OK with body: {\"message\":\"parsed\"}..."
+      },
+      {
+        "endpoint": "/old",
+        "method": "GET",
+        "evidence": "Received 200 OK with body: {\"message\":\"This is a deprecated endpoint\",\"status\":\"active\"}..."
+      },
+      {
+        "endpoint": "/api/users_pii",
+        "method": "GET",
+        "evidence": "Received 200 OK with body: {\"users\":[{\"id\":1,\"email\":\"admin@example.com\",\"ssn\":\"123-45-6789\"},{\"id\":2,\"email\":\"user@test.com\",\"credit_card\":\"4111 2222 3333 4444\"}]}..."
       },
       {
         "endpoint": "/api/unsafe",
@@ -56,9 +49,166 @@
         "evidence": "Received 200 OK with body: {\"echo\":\"unsafe\"}..."
       },
       {
+        "endpoint": "/api/unsafe",
+        "method": "TRACK",
+        "evidence": "Received 200 OK with body: {\"echo\":\"unsafe\"}..."
+      },
+      {
+        "endpoint": "/api/pollute",
+        "method": "POST",
+        "evidence": "Received 200 OK with body: {}..."
+      },
+      {
         "endpoint": "/robots.txt",
         "method": "GET",
         "evidence": "Received 200 OK with body: User-agent: *\nDisallow: /admin..."
+      },
+      {
+        "endpoint": "/api/config_secrets",
+        "method": "GET",
+        "evidence": "Received 200 OK with body: {\"aws_access_key\":\"AKIAIOSFODNN7EXAMPLE\",\"private_key\":\"-----BEGIN RSA PRIVATE KEY-----\\nMIIEogIBAAKCAQEA...\"}..."
+      },
+      {
+        "endpoint": "/package.json",
+        "method": "GET",
+        "evidence": "Received 200 OK with body: {\"name\":\"vulnerable-app\",\"dependencies\":{\"express\":\"4.17.1\"}}..."
+      }
+    ]
+  },
+  {
+    "rule_name": "Broken Object Level Authorization (Read)",
+    "rule_id": "BOLA-READ",
+    "severity": "HIGH",
+    "description": "Endpoint accessible with multiple object IDs (user_id).",
+    "impact": "Attackers can access unauthorized data objects.",
+    "recommendation": "Implement object-level ownership checks.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/users/{user_id}",
+        "method": "GET",
+        "evidence": "ID 1: 200 OK (75b)\nID 1337: 200 OK (78b)"
+      }
+    ]
+  },
+  {
+    "rule_name": "Leaked Version Header: Server",
+    "rule_id": "DEPENDENCY_CHECK",
+    "severity": "LOW",
+    "description": "The server exposes software version information via the Server header.",
+    "impact": "Unknown",
+    "recommendation": "Configure the server to suppress version headers.",
+    "count": 22,
+    "instances": [
+      {
+        "endpoint": "/admin",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/products",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/search",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/users/{user_id}",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/graphql",
+        "method": "POST",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/jwt-protected",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/ping",
+        "method": "POST",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/render",
+        "method": "POST",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/products",
+        "method": "POST",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/parse_xml",
+        "method": "POST",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/login",
+        "method": "POST",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/profile",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/upload",
+        "method": "POST",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/redirect",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/old",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/users_pii",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/unsafe",
+        "method": "TRACE",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/unsafe",
+        "method": "TRACK",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/pollute",
+        "method": "POST",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/robots.txt",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/api/config_secrets",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
+      },
+      {
+        "endpoint": "/package.json",
+        "method": "GET",
+        "evidence": "Server: uvicorn"
       }
     ]
   },
@@ -74,28 +224,165 @@
       {
         "endpoint": "/robots.txt",
         "method": "GET",
-        "evidence": "File exists at http://localhost:8000/robots.txt (200 OK)"
+        "evidence": "File exists at http://127.0.0.1:8000/robots.txt (200 OK)"
       }
     ]
   },
   {
-    "rule_name": "Missing Security Headers",
-    "rule_id": "API8-MISCONFIG",
-    "severity": "LOW",
-    "description": "Response missing security headers: X-Content-Type-Options, Strict-Transport-Security, Content-Security-Policy.",
-    "impact": "Reduced defense against XSS, clickjacking, and MITM.",
-    "recommendation": "Configure your web server/gateway to send standard security headers.",
+    "rule_name": "Shadow API Detection",
+    "rule_id": "SHADOW_API",
+    "severity": "INFO",
+    "description": "Found potential shadow or undocumented API location: http://127.0.0.1:8000/old",
+    "impact": "Unknown",
+    "recommendation": "Ensure all API endpoints are documented and deprecated versions are disabled.",
     "count": 2,
     "instances": [
       {
-        "endpoint": "/api/unsafe",
-        "method": "TRACE",
-        "evidence": "Headers received: ['date', 'server', 'content-length', 'content-type']"
+        "endpoint": "/old",
+        "method": "GET",
+        "evidence": "Received 200 OK for http://127.0.0.1:8000/old"
       },
       {
-        "endpoint": "/robots.txt",
+        "endpoint": "/admin",
         "method": "GET",
-        "evidence": "Headers received: ['date', 'server', 'content-length', 'content-type']"
+        "evidence": "Received 200 OK for http://127.0.0.1:8000/admin"
+      }
+    ]
+  },
+  {
+    "rule_name": "SQL Injection (Error-Based)",
+    "rule_id": "INJ-SQL-001",
+    "severity": "CRITICAL",
+    "description": "Endpoint returns database error messages when injecting '''.",
+    "impact": "Full database compromise, data leakage, data loss.",
+    "recommendation": "Use parametrized queries (Prepared Statements) for all DB access.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/products",
+        "method": "GET",
+        "evidence": "Payload: '\nMatched Error: SQL syntax.*MySQL\nResponse Snippet: \"Internal Server Error: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version\""
+      }
+    ]
+  },
+  {
+    "rule_name": "Exposed Configuration File: /package.json",
+    "rule_id": "DEPENDENCY_CHECK",
+    "severity": "HIGH",
+    "description": "The file /package.json is publicly accessible.",
+    "impact": "Unknown",
+    "recommendation": "Configure the web server to deny access to configuration files.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/package.json",
+        "method": "GET",
+        "evidence": "Accessed http://127.0.0.1:8000/package.json successfully."
+      }
+    ]
+  },
+  {
+    "rule_name": "Reflected XSS",
+    "rule_id": "INJ-XSS-001",
+    "severity": "HIGH",
+    "description": "Endpoint reflects user input without encoding (Reflected XSS).",
+    "impact": "Attackers can execute malicious scripts in user's browser.",
+    "recommendation": "Context-aware output encoding (e.g. HTML entity encoding).",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/search",
+        "method": "GET",
+        "evidence": "Payload: <script>alert('APScan')</script>\nResponse contains raw payload."
+      }
+    ]
+  },
+  {
+    "rule_name": "Command Injection (CMDi)",
+    "rule_id": "INJ-003",
+    "severity": "CRITICAL",
+    "description": "Possible OS Command Injection detected using payload '& ping -c 1 127.0.0.1'.",
+    "impact": "Remote Code Execution (RCE), Full System Compromise.",
+    "recommendation": "Avoid system calls with user input. Use safe APIs or strictly validate input (allowlist).",
+    "count": 2,
+    "instances": [
+      {
+        "endpoint": "/search",
+        "method": "GET",
+        "evidence": "Payload: & ping -c 1 127.0.0.1\nMatched Signature: 127\\.0\\.0\\.1\nResponse Snippet: {\"results\":[],\"query\":\"& ping -c 1 127.0.0.1\"}"
+      },
+      {
+        "endpoint": "/api/ping",
+        "method": "POST",
+        "evidence": "Payload: ; cat /etc/passwd\nMatched Signature: root:x:0:0\nResponse Snippet: Pinging... \nroot:x:0:0:root:/root:/bin/bash\nuid=0(root) gid=0(root)"
+      }
+    ]
+  },
+  {
+    "rule_name": "Server-Side Template Injection (SSTI)",
+    "rule_id": "INJ-004",
+    "severity": "HIGH",
+    "description": "Template Injection detected. Server evaluated '<#assign ex=\"freemarker.template.utility.Execute\"?new()> ${ex(\"id\")}'.",
+    "impact": "Remote Code Execution (RCE) via template engine sandbox escape.",
+    "recommendation": "Use logic-less templates or disable template evaluation of user input.",
+    "count": 3,
+    "instances": [
+      {
+        "endpoint": "/search",
+        "method": "GET",
+        "evidence": "Payload: <#assign ex=\"freemarker.template.utility.Execute\"?new()> ${ex(\"id\")}\nMatched: freemarker\\.template\nResponse Snippet: {\"results\":[],\"query\":\"<#assign ex=\\\"freemarker.template.utility.Execute\\\"?new()> ${ex(\\\"id\\\")}\"}"
+      },
+      {
+        "endpoint": "/api/render",
+        "method": "POST",
+        "evidence": "Payload: {{7*7}}\nMatched: Evaluated '7*7' to '49'\nResponse Snippet: Output: 49"
+      },
+      {
+        "endpoint": "/api/ping",
+        "method": "POST",
+        "evidence": "Payload: {php}echo 7*7;{/php}\nMatched: uid=[0-9]+\\(\nResponse Snippet: Pinging... \nroot:x:0:0:root:/root:/bin/bash\nuid=0(root) gid=0(root)"
+      }
+    ]
+  },
+  {
+    "rule_name": "NoSQL Injection",
+    "rule_id": "INJ-005",
+    "severity": "HIGH",
+    "description": "NoSQL Injection detected. Database error returned.",
+    "impact": "Data leakage, Authentication Bypass in NoSQL DBs.",
+    "recommendation": "Sanitize input, avoid passing user input directly to MongoDB query ops.",
+    "count": 3,
+    "instances": [
+      {
+        "endpoint": "/api/ping",
+        "method": "POST",
+        "evidence": "Payload: {'$where': 'return true'}\nMatched: DB Error: \\$where\nResponse Snippet: {\"detail\":[{\"type\":\"string_type\",\"loc\":[\"body\",\"cmd\"],\"msg\":\"Input should be a valid string\",\"input\":{\"$where\":\"return true\"}}]}"
+      },
+      {
+        "endpoint": "/api/render",
+        "method": "POST",
+        "evidence": "Payload: {'$where': 'return true'}\nMatched: DB Error: \\$where\nResponse Snippet: {\"detail\":[{\"type\":\"string_type\",\"loc\":[\"body\",\"template\"],\"msg\":\"Input should be a valid string\",\"input\":{\"$where\":\"return true\"}}]}"
+      },
+      {
+        "endpoint": "/api/products",
+        "method": "POST",
+        "evidence": "Payload: {'$ne': None}\nMatched: DB Error: MongoError\nResponse Snippet: MongoError: Expected string, got object"
+      }
+    ]
+  },
+  {
+    "rule_name": "XML External Entity (XXE)",
+    "rule_id": "INJ-006",
+    "severity": "CRITICAL",
+    "description": "XML External Entity (XXE) vulnerability detected. Server parsed external entity.",
+    "impact": "File Disclosure (LFI), SSRF, DoS.",
+    "recommendation": "Disable DTD processing and external entities in your XML parser config.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/api/parse_xml",
+        "method": "POST",
+        "evidence": "Payload: <?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<!DOCTYPE foo [\n  <!ELEMENT foo ANY >\n  <!ENTITY xxe SYSTEM \"file:///etc/passwd\" >]><foo>&xxe;</foo>\nMatched: root:x:0:0\nResponse Snippet: root:x:0:0:root:/root:/bin/bash"
       }
     ]
   },
@@ -106,54 +393,315 @@
     "description": "Endpoint does not appear to enforce rate limiting (no 429s or headers observed).",
     "impact": "Susceptible to Denial of Service (DoS) or Brute Force.",
     "recommendation": "Implement rate limiting middleware (e.g. 100/minute).",
-    "count": 2,
+    "count": 8,
     "instances": [
+      {
+        "endpoint": "/api/parse_xml",
+        "method": "POST",
+        "evidence": "Sent 10 requests, all successful, no X-RateLimit headers."
+      },
+      {
+        "endpoint": "/old",
+        "method": "GET",
+        "evidence": "Sent 10 requests, all successful, no X-RateLimit headers."
+      },
+      {
+        "endpoint": "/api/users_pii",
+        "method": "GET",
+        "evidence": "Sent 10 requests, all successful, no X-RateLimit headers."
+      },
       {
         "endpoint": "/api/unsafe",
         "method": "TRACE",
         "evidence": "Sent 10 requests, all successful, no X-RateLimit headers."
       },
       {
+        "endpoint": "/api/unsafe",
+        "method": "TRACK",
+        "evidence": "Sent 10 requests, all successful, no X-RateLimit headers."
+      },
+      {
+        "endpoint": "/api/config_secrets",
+        "method": "GET",
+        "evidence": "Sent 10 requests, all successful, no X-RateLimit headers."
+      },
+      {
         "endpoint": "/robots.txt",
+        "method": "GET",
+        "evidence": "Sent 10 requests, all successful, no X-RateLimit headers."
+      },
+      {
+        "endpoint": "/package.json",
         "method": "GET",
         "evidence": "Sent 10 requests, all successful, no X-RateLimit headers."
       }
     ]
   },
   {
-    "rule_name": "Custom Hello Rule",
-    "rule_id": "CUSTOM_RULE_01",
-    "severity": "INFO",
-    "description": "Custom rule execution confirmed.",
-    "impact": "Unknown",
-    "recommendation": null,
-    "count": 1,
+    "rule_name": "Missing Security Headers",
+    "rule_id": "API8-MISCONFIG",
+    "severity": "LOW",
+    "description": "Response missing security headers: X-Content-Type-Options, Strict-Transport-Security, Content-Security-Policy.",
+    "impact": "Reduced defense against XSS, clickjacking, and MITM.",
+    "recommendation": "Configure your web server/gateway to send standard security headers.",
+    "count": 8,
     "instances": [
       {
-        "endpoint": "/",
+        "endpoint": "/api/parse_xml",
+        "method": "POST",
+        "evidence": "Headers received: ['date', 'server', 'content-length', 'content-type']"
+      },
+      {
+        "endpoint": "/old",
         "method": "GET",
-        "evidence": "Plugin system active."
+        "evidence": "Headers received: ['date', 'server', 'content-length', 'content-type']"
+      },
+      {
+        "endpoint": "/api/users_pii",
+        "method": "GET",
+        "evidence": "Headers received: ['date', 'server', 'content-length', 'content-type']"
+      },
+      {
+        "endpoint": "/api/unsafe",
+        "method": "TRACE",
+        "evidence": "Headers received: ['date', 'server', 'content-length', 'content-type']"
+      },
+      {
+        "endpoint": "/api/unsafe",
+        "method": "TRACK",
+        "evidence": "Headers received: ['date', 'server', 'content-length', 'content-type']"
+      },
+      {
+        "endpoint": "/robots.txt",
+        "method": "GET",
+        "evidence": "Headers received: ['date', 'server', 'content-length', 'content-type']"
+      },
+      {
+        "endpoint": "/api/config_secrets",
+        "method": "GET",
+        "evidence": "Headers received: ['date', 'server', 'content-length', 'content-type']"
+      },
+      {
+        "endpoint": "/package.json",
+        "method": "GET",
+        "evidence": "Headers received: ['date', 'server', 'x-powered-by', 'content-length', 'content-type']"
       }
     ]
   },
   {
-    "rule_name": "Shadow API Detection",
-    "rule_id": "SHADOW_API",
-    "severity": "INFO",
-    "description": "Found potential shadow or undocumented API location: http://localhost:8000/old",
+    "rule_name": "Open Redirect",
+    "rule_id": "OPEN_REDIRECT",
+    "severity": "MEDIUM",
+    "description": "Parameter 'url' reflects input in Location header, allowing open redirects.",
     "impact": "Unknown",
-    "recommendation": "Ensure all API endpoints are documented and deprecated versions are disabled.",
+    "recommendation": "Validate all redirect targets against a whitelist of allowed domains.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/redirect",
+        "method": "GET",
+        "evidence": "Payload: http://evil.com\nLocation: http://evil.com"
+      }
+    ]
+  },
+  {
+    "rule_name": "Excessive Data Exposure",
+    "rule_id": "DATA-EXPOSURE",
+    "severity": "HIGH",
+    "description": "Endpoint exposes sensitive data matching pattern \"ssn\"\\s*:.",
+    "impact": "Leakage of PII or credentials.",
+    "recommendation": "Filter sensitive fields from the response DTO.",
     "count": 2,
     "instances": [
       {
-        "endpoint": "/old",
+        "endpoint": "/api/users_pii",
         "method": "GET",
-        "evidence": "Received 200 OK for http://localhost:8000/old"
+        "evidence": "Matched pattern: \"ssn\"\\s*: in response."
       },
       {
-        "endpoint": "/admin",
+        "endpoint": "/api/config_secrets",
         "method": "GET",
-        "evidence": "Received 200 OK for http://localhost:8000/admin"
+        "evidence": "Matched pattern: \"private_key\"\\s*: in response."
+      }
+    ]
+  },
+  {
+    "rule_name": "Email Address Exposure",
+    "rule_id": "PII_EXPOSURE",
+    "severity": "HIGH",
+    "description": "Response contains suspected Email Address.",
+    "impact": "Unknown",
+    "recommendation": "Ensure sensitive PII is masked or encrypted.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/api/users_pii",
+        "method": "GET",
+        "evidence": "Matched pattern: admin@example.com..."
+      }
+    ]
+  },
+  {
+    "rule_name": "US SSN Exposure",
+    "rule_id": "PII_EXPOSURE",
+    "severity": "HIGH",
+    "description": "Response contains suspected US SSN.",
+    "impact": "Unknown",
+    "recommendation": "Ensure sensitive PII is masked or encrypted.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/api/users_pii",
+        "method": "GET",
+        "evidence": "Matched pattern: 123-45-6789..."
+      }
+    ]
+  },
+  {
+    "rule_name": "Credit Card Exposure",
+    "rule_id": "PII_EXPOSURE",
+    "severity": "HIGH",
+    "description": "Response contains suspected Credit Card.",
+    "impact": "Unknown",
+    "recommendation": "Ensure sensitive PII is masked or encrypted.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/api/users_pii",
+        "method": "GET",
+        "evidence": "Matched pattern: 4111 2222 3333 4444..."
+      }
+    ]
+  },
+  {
+    "rule_name": "Broken Function Level Authorization",
+    "rule_id": "API5-BFLA",
+    "severity": "HIGH",
+    "description": "Sensitive endpoint accessible by current user: /api/users_pii",
+    "impact": "Low-privileged users might perform administrative actions.",
+    "recommendation": "Ensure ACLs deny access to this function for standard users.",
+    "count": 2,
+    "instances": [
+      {
+        "endpoint": "/api/users_pii",
+        "method": "GET",
+        "evidence": "Matched keyword in path and received 200."
+      },
+      {
+        "endpoint": "/api/config_secrets",
+        "method": "GET",
+        "evidence": "Matched keyword in path and received 200."
+      }
+    ]
+  },
+  {
+    "rule_name": "Unsafe HTTP Methods",
+    "rule_id": "UNSAFE_METHODS",
+    "severity": "LOW",
+    "description": "Method TRACE is enabled.",
+    "impact": "Unknown",
+    "recommendation": "Disable the TRACE method in server configuration.",
+    "count": 4,
+    "instances": [
+      {
+        "endpoint": "/api/unsafe",
+        "method": "TRACE",
+        "evidence": "Received 200 OK for TRACE (Headers reflected in body - Cross Site Tracing risk)"
+      },
+      {
+        "endpoint": "/api/unsafe",
+        "method": "TRACK",
+        "evidence": "Received 200 OK for TRACK"
+      },
+      {
+        "endpoint": "/api/unsafe",
+        "method": "TRACE",
+        "evidence": "Received 200 OK for TRACE (Headers reflected in body - Cross Site Tracing risk)"
+      },
+      {
+        "endpoint": "/api/unsafe",
+        "method": "TRACK",
+        "evidence": "Received 200 OK for TRACK"
+      }
+    ]
+  },
+  {
+    "rule_name": "AWS Access Key Exposure",
+    "rule_id": "SECRETS_EXPOSURE",
+    "severity": "CRITICAL",
+    "description": "Response contains a potential AWS Access Key.",
+    "impact": "Unknown",
+    "recommendation": "Rotate the exposed key immediately and remove it from the code/response.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/api/config_secrets",
+        "method": "GET",
+        "evidence": "Matched pattern: AKIAIOSFODNN7EXAMPLE"
+      }
+    ]
+  },
+  {
+    "rule_name": "Generic Private Key Exposure",
+    "rule_id": "SECRETS_EXPOSURE",
+    "severity": "CRITICAL",
+    "description": "Response contains a potential Generic Private Key.",
+    "impact": "Unknown",
+    "recommendation": "Rotate the exposed key immediately and remove it from the code/response.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/api/config_secrets",
+        "method": "GET",
+        "evidence": "Matched pattern: -----BEGIN RSA PRIVATE KEY-----"
+      }
+    ]
+  },
+  {
+    "rule_name": "AWS API Key Exposure",
+    "rule_id": "PII_EXPOSURE",
+    "severity": "HIGH",
+    "description": "Response contains suspected AWS API Key.",
+    "impact": "Unknown",
+    "recommendation": "Ensure sensitive PII is masked or encrypted.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/api/config_secrets",
+        "method": "GET",
+        "evidence": "Matched pattern: AKIAIOSFODNN7EXAMPLE..."
+      }
+    ]
+  },
+  {
+    "rule_name": "Private Key Exposure",
+    "rule_id": "PII_EXPOSURE",
+    "severity": "HIGH",
+    "description": "Response contains suspected Private Key.",
+    "impact": "Unknown",
+    "recommendation": "Ensure sensitive PII is masked or encrypted.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/api/config_secrets",
+        "method": "GET",
+        "evidence": "Matched pattern: RSA..."
+      }
+    ]
+  },
+  {
+    "rule_name": "Leaked Version Header: X-Powered-By",
+    "rule_id": "DEPENDENCY_CHECK",
+    "severity": "LOW",
+    "description": "The server exposes software version information via the X-Powered-By header.",
+    "impact": "Unknown",
+    "recommendation": "Configure the server to suppress version headers.",
+    "count": 1,
+    "instances": [
+      {
+        "endpoint": "/package.json",
+        "method": "GET",
+        "evidence": "X-Powered-By: Express/4.17.1"
       }
     ]
   }

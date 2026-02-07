@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Terminal, Shield, Play, Loader2, AlertTriangle, CheckCircle, FileJson, Globe, FileCode, List, Sun, Moon, Download, Trash2 } from 'lucide-react'
-import WorkflowBuilder from './components/WorkflowBuilder'
+import RuleBuilder from './components/RuleBuilder'
 
 const API_BASE = "http://localhost:8083/api"
 
 function App() {
     const [theme, setTheme] = useState('dark')
     const [scanId, setScanId] = useState(null)
-    const [view, setView] = useState('config') // config, running, results
+    const [view, setView] = useState('config') // config, running, results, rules
     const [status, setStatus] = useState(null)
     const [results, setResults] = useState([])
-    const [history, setHistory] = useState([]) // Initialize as empty array
+    const [history, setHistory] = useState([])
+    const [rules, setRules] = useState([])
+    const [isCreatingRule, setIsCreatingRule] = useState(false)
 
     // Config State
     const [inputType, setInputType] = useState('openapi')
@@ -43,6 +45,7 @@ function App() {
     // Load history on mount
     useEffect(() => {
         fetchHistory()
+        fetchRules()
     }, [])
 
     const fetchHistory = async () => {
@@ -50,16 +53,51 @@ function App() {
             const res = await fetch(`${API_BASE}/scans`)
             if (!res.ok) throw new Error("Failed to fetch history")
             const data = await res.json()
-            console.log("Fetched history:", data) // Debug log
             if (Array.isArray(data)) {
                 setHistory(data)
             } else {
-                console.error("History data is not an array:", data)
                 setHistory([])
             }
         } catch (e) {
             console.error("Fetch history error:", e)
             setHistory([])
+        }
+    }
+
+    const fetchRules = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/rules`)
+            if (!res.ok) throw new Error("Failed to fetch rules")
+            const data = await res.json()
+            setRules(Array.isArray(data) ? data : [])
+        } catch (e) {
+            console.error("Fetch rules error:", e)
+        }
+    }
+
+    const saveRule = async (ruleData) => {
+        try {
+            const res = await fetch(`${API_BASE}/rules`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(ruleData)
+            })
+            if (!res.ok) throw new Error("Failed to save rule")
+            setIsCreatingRule(false)
+            fetchRules()
+        } catch (e) {
+            setError("Failed to save rule: " + e.message)
+        }
+    }
+
+    const deleteRule = async (ruleId) => {
+        if (!confirm("Delete this rule?")) return
+        try {
+            const res = await fetch(`${API_BASE}/rules/${ruleId}`, { method: 'DELETE' })
+            if (!res.ok) throw new Error("Failed to delete rule")
+            fetchRules()
+        } catch (e) {
+            setError("Failed to delete rule: " + e.message)
         }
     }
 
@@ -157,11 +195,14 @@ function App() {
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8 text-gray-800 dark:text-gray-300 transition-colors duration-200">
             <header className="max-w-5xl mx-auto flex items-center justify-between mb-12 border-b border-gray-200 dark:border-cyber-gray pb-6">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('config')}>
                     <Shield className="w-10 h-10 text-cyber-green" />
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">APScan <span className="text-cyber-green text-sm align-top">PRO</span> <span className="text-xs text-gray-500 ml-2">v0.1.0</span></h1>
                 </div>
                 <div className="flex items-center gap-6">
+                    <button onClick={() => { setView('rules'); setIsCreatingRule(false); }} className={`text-sm font-bold hover:text-cyber-green ${view === 'rules' ? 'text-cyber-green' : 'text-gray-500'}`}>
+                        Rules Engine
+                    </button>
                     <button
                         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         className="text-gray-500 hover:text-cyber-green transition-colors"
@@ -185,6 +226,51 @@ function App() {
                             <p>{error}</p>
                         </div>
                         <button onClick={() => setError(null)} className="ml-auto text-red-300 hover:text-white">✕</button>
+                    </div>
+                )}
+
+                {view === 'rules' && (
+                    <div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <FileCode className="w-6 h-6 text-cyber-green" /> Custom Rules Strategy
+                            </h2>
+                            {!isCreatingRule && (
+                                <button
+                                    onClick={() => setIsCreatingRule(true)}
+                                    className="btn-primary flex items-center gap-2"
+                                >
+                                    <List className="w-4 h-4" /> Create New Rule
+                                </button>
+                            )}
+                        </div>
+
+                        {isCreatingRule ? (
+                            <RuleBuilder onSave={saveRule} onCancel={() => setIsCreatingRule(false)} />
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4">
+                                {rules.map(rule => (
+                                    <div key={rule.id} className="bg-white dark:bg-black p-4 rounded border border-gray-200 dark:border-cyber-gray hover:border-cyber-green flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                                                {rule.name}
+                                                <span className={`text-[10px] px-2 py-0.5 rounded border ${rule.type === 'YAML' ? 'border-purple-500 text-purple-500' : 'border-blue-500 text-blue-500'}`}>
+                                                    {rule.type}
+                                                </span>
+                                            </h3>
+                                            <p className="text-sm text-gray-500">{rule.description}</p>
+                                            <span className="text-xs font-mono text-gray-600 dark:text-gray-400 mt-2 block">ID: {rule.id}</span>
+                                        </div>
+                                        {rule.type === 'YAML' && (
+                                            <button onClick={() => deleteRule(rule.id)} className="text-red-500 hover:text-red-300 p-2">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                {rules.length === 0 && <p className="text-gray-500 italic">No custom rules defined.</p>}
+                            </div>
+                        )}
                     </div>
                 )}
 

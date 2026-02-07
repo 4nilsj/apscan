@@ -85,6 +85,28 @@ async def delete_scan(scan_id: str):
         raise HTTPException(status_code=404, detail="Scan not found")
     return {"message": "Scan deleted successfully"}
 
+# --- Rule Management API ---
+
+@app.get("/api/rules")
+def list_rules():
+    """List all available rules."""
+    return manager.get_all_rules()
+
+@app.post("/api/rules")
+async def create_rule(rule: dict):
+    """Create or update a custom rule."""
+    # Build complete rule structure if simplified
+    rule_id = await manager.save_custom_rule(rule)
+    return {"id": rule_id, "message": "Rule saved successfully"}
+
+@app.delete("/api/rules/{rule_id}")
+async def delete_rule(rule_id: str):
+    """Delete a custom rule."""
+    success = await manager.delete_custom_rule(rule_id)
+    if not success:
+         raise HTTPException(status_code=404, detail="Rule not found")
+    return {"message": "Rule deleted"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("apscan.server.main:app", host="0.0.0.0", port=8000, reload=True)
