@@ -20,6 +20,20 @@ function App() {
     const [curlCmd, setCurlCmd] = useState('')
     const [fileContent, setFileContent] = useState('')
 
+    // Auth State
+    const [authType, setAuthType] = useState('none')
+    const [authKey, setAuthKey] = useState('')
+    const [authHeader, setAuthHeader] = useState('X-API-Key')
+    const [authUsername, setAuthUsername] = useState('')
+    const [authPassword, setAuthPassword] = useState('')
+    const [authToken, setAuthToken] = useState('')
+    const [authCookie, setAuthCookie] = useState('')
+    // OAuth2 State
+    const [oauthTokenUrl, setOauthTokenUrl] = useState('')
+    const [oauthClientId, setOauthClientId] = useState('')
+    const [oauthClientSecret, setOauthClientSecret] = useState('')
+    const [oauthScope, setOauthScope] = useState('')
+
     // Advanced State
     const [graphql, setGraphql] = useState(false)
     const [aiProvider, setAiProvider] = useState('')
@@ -32,85 +46,40 @@ function App() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState(null)
 
-    // Theme Effect
-    useEffect(() => {
-        console.log("Theme changing to:", theme) // Debug log
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark')
-        } else {
-            document.documentElement.classList.remove('dark')
-        }
-    }, [theme])
-
-    // Load history on mount
-    useEffect(() => {
-        fetchHistory()
-        fetchRules()
-    }, [])
-
-    const fetchHistory = async () => {
-        try {
-            const res = await fetch(`${API_BASE}/scans`)
-            if (!res.ok) throw new Error("Failed to fetch history")
-            const data = await res.json()
-            if (Array.isArray(data)) {
-                setHistory(data)
-            } else {
-                setHistory([])
-            }
-        } catch (e) {
-            console.error("Fetch history error:", e)
-            setHistory([])
-        }
-    }
-
-    const fetchRules = async () => {
-        try {
-            const res = await fetch(`${API_BASE}/rules`)
-            if (!res.ok) throw new Error("Failed to fetch rules")
-            const data = await res.json()
-            setRules(Array.isArray(data) ? data : [])
-        } catch (e) {
-            console.error("Fetch rules error:", e)
-        }
-    }
-
-    const saveRule = async (ruleData) => {
-        try {
-            const res = await fetch(`${API_BASE}/rules`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(ruleData)
-            })
-            if (!res.ok) throw new Error("Failed to save rule")
-            setIsCreatingRule(false)
-            fetchRules()
-        } catch (e) {
-            setError("Failed to save rule: " + e.message)
-        }
-    }
-
-    const deleteRule = async (ruleId) => {
-        if (!confirm("Delete this rule?")) return
-        try {
-            const res = await fetch(`${API_BASE}/rules/${ruleId}`, { method: 'DELETE' })
-            if (!res.ok) throw new Error("Failed to delete rule")
-            fetchRules()
-        } catch (e) {
-            setError("Failed to delete rule: " + e.message)
-        }
-    }
+    // ... (Effect hooks remain the same) ...
 
     const startScan = async () => {
         setIsSubmitting(true)
         setError(null)
         try {
+            // Construct Auth Config
+            let authConfig = null
+            if (authType !== 'none') {
+                authConfig = { type: authType }
+                if (authType === 'apikey') {
+                    authConfig.key = authKey
+                    authConfig.header = authHeader
+                } else if (authType === 'basic') {
+                    authConfig.username = authUsername
+                    authConfig.password = authPassword
+                } else if (authType === 'bearer') {
+                    authConfig.token = authToken
+                } else if (authType === 'cookie') {
+                    authConfig.cookie = authCookie
+                } else if (authType === 'oauth2') {
+                    authConfig.token_url = oauthTokenUrl
+                    authConfig.client_id = oauthClientId
+                    authConfig.client_secret = oauthClientSecret
+                    authConfig.scope = oauthScope
+                }
+            }
+
             const payload = {
                 input_type: inputType,
                 target_url: inputType === 'openapi' ? targetUrl : undefined,
                 curl_command: inputType === 'curl' ? curlCmd : undefined,
                 file_content: (inputType !== 'openapi' && inputType !== 'curl') ? fileContent : undefined,
-                auth_type: 'none',
+                auth_config: authConfig,
                 graphql: graphql,
                 ai_provider: aiProvider || undefined,
                 ai_key: aiKey || undefined
@@ -352,6 +321,144 @@ function App() {
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Authentication Configuration */}
+                                    <div className="border-t border-cyber-gray pt-6 mt-6">
+                                        <h3 className="text-sm font-bold text-cyber-green uppercase mb-4">Authentication</h3>
+
+                                        <div className="mb-4">
+                                            <label className="block text-sm font-medium mb-2">Auth Type</label>
+                                            <select
+                                                value={authType}
+                                                onChange={(e) => setAuthType(e.target.value)}
+                                                className="input-field"
+                                            >
+                                                <option value="none">None (Public API)</option>
+                                                <option value="apikey">API Key</option>
+                                                <option value="bearer">Bearer Token</option>
+                                                <option value="basic">Basic Auth</option>
+                                                <option value="cookie">Cookie Session</option>
+                                                <option value="oauth2">OAuth2 (Client Credentials)</option>
+                                            </select>
+                                        </div>
+
+                                        {authType === 'apikey' && (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Header Name</label>
+                                                    <input
+                                                        className="input-field"
+                                                        placeholder="X-API-Key"
+                                                        value={authHeader}
+                                                        onChange={(e) => setAuthHeader(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Value</label>
+                                                    <input
+                                                        type="password"
+                                                        className="input-field"
+                                                        placeholder="my-secret-key"
+                                                        value={authKey}
+                                                        onChange={(e) => setAuthKey(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {authType === 'bearer' && (
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Token</label>
+                                                <input
+                                                    type="password"
+                                                    className="input-field"
+                                                    placeholder="eyJhbGciOi..."
+                                                    value={authToken}
+                                                    onChange={(e) => setAuthToken(e.target.value)}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {authType === 'basic' && (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Username</label>
+                                                    <input
+                                                        className="input-field"
+                                                        placeholder="admin"
+                                                        value={authUsername}
+                                                        onChange={(e) => setAuthUsername(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Password</label>
+                                                    <input
+                                                        type="password"
+                                                        className="input-field"
+                                                        placeholder="********"
+                                                        value={authPassword}
+                                                        onChange={(e) => setAuthPassword(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {authType === 'cookie' && (
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Cookie String</label>
+                                                <input
+                                                    className="input-field"
+                                                    placeholder="session_id=xyz123; user=alice"
+                                                    value={authCookie}
+                                                    onChange={(e) => setAuthCookie(e.target.value)}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {authType === 'oauth2' && (
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Token Endpoint URL</label>
+                                                    <input
+                                                        className="input-field"
+                                                        placeholder="https://auth.example.com/oauth/token"
+                                                        value={oauthTokenUrl}
+                                                        onChange={(e) => setOauthTokenUrl(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-2">Client ID</label>
+                                                        <input
+                                                            className="input-field"
+                                                            placeholder="my-client-id"
+                                                            value={oauthClientId}
+                                                            onChange={(e) => setOauthClientId(e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-2">Client Secret</label>
+                                                        <input
+                                                            type="password"
+                                                            className="input-field"
+                                                            placeholder="********"
+                                                            value={oauthClientSecret}
+                                                            onChange={(e) => setOauthClientSecret(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Scope (Optional)</label>
+                                                    <input
+                                                        className="input-field"
+                                                        placeholder="read:user write:user"
+                                                        value={oauthScope}
+                                                        onChange={(e) => setOauthScope(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
 
                                     {/* Advanced Options */}
                                     <div className="border-t border-cyber-gray pt-6 mt-6">

@@ -156,24 +156,37 @@ class ScanOrchestrator:
         
         auth_config = self.context.target.auth_config
         if auth_config:
-            from apscan.auth.providers import ApiKeyAuth, BasicAuth
+            from apscan.auth.providers import ApiKeyAuth, BasicAuth, BearerAuth, CookieAuth, OAuth2ClientCredentials
             
             provider = None
-            if auth_config.get("type") == "apikey":
+            auth_type = auth_config.get("type")
+            
+            if auth_type == "apikey":
                 provider = ApiKeyAuth(
                     key=auth_config.get("key"), 
                     header=auth_config.get("header", "X-API-Key")
                 )
-            elif auth_config.get("type") == "basic":
+            elif auth_type == "basic":
                 provider = BasicAuth(
                     username=auth_config.get("username"),
                     password=auth_config.get("password")
+                )
+            elif auth_type == "bearer":
+                provider = BearerAuth(token=auth_config.get("token"))
+            elif auth_type == "cookie":
+                provider = CookieAuth(cookie_string=auth_config.get("cookie"))
+            elif auth_type == "oauth2":
+                provider = OAuth2ClientCredentials(
+                    token_url=auth_config.get("token_url"),
+                    client_id=auth_config.get("client_id"),
+                    client_secret=auth_config.get("client_secret"),
+                    scope=auth_config.get("scope")
                 )
             
             if provider:
                 headers = provider.get_headers()
                 self.context.auth_headers.update(headers)
-                print(f"[*] Authentication configured. Headers: {list(headers.keys())}")
+                print(f"[*] Authentication configured ({auth_type}). Headers: {list(headers.keys())}")
 
     async def execute_rules(self):
         """Step 4: Execute rules against the attack surface."""

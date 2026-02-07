@@ -214,5 +214,18 @@ def get_package_json():
         headers={"X-Powered-By": "Express/4.17.1"}
     )
 
+@app.get("/api/protected/bearer")
+async def protected_bearer(authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Bearer token")
+    return {"message": "Authenticated with Bearer token", "user": "admin"}
+
+@app.get("/api/protected/cookie")
+async def protected_cookie(session_id: str = Cookie(None)):
+    if session_id != "xyz123":
+        raise HTTPException(status_code=401, detail="Missing or invalid session cookie")
+    return {"message": "Authenticated with Cookie", "user": "alice"}
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
