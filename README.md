@@ -16,24 +16,23 @@ A modular, plug-and-play API security scanner designed for CI/CD and modern API 
 
 ## Installation
 
-### 1. Backend Setup
 
-```bash
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+See [INSTALL.md](INSTALL.md) for detailed installation instructions.
 
-# Install dependencies (including development deps)
-pip install -e .
-pip install greenlet  # Required for async database operations
-```
+### Quick Start
 
-### 2. Frontend Setup
+1.  **Backend**:
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install -e .
+    ```
 
-```bash
-cd web
-npm install
-```
+2.  **Frontend**:
+    ```bash
+    cd web
+    npm install
+    ```
 
 ## Running the Application
 
